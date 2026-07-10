@@ -14,7 +14,8 @@ pub struct AppSettings {
     pub discovery_enabled: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct TransferHistoryRecord {
     pub metadata: TransferMetadata,
     pub failure_message: Option<String>,
