@@ -65,6 +65,28 @@ pub struct MetadataValidationError {
     pub message: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MetadataValidationResult {
+    pub valid: bool,
+    pub error: Option<MetadataValidationError>,
+}
+
+impl MetadataValidationResult {
+    pub fn from_metadata(metadata: &TransferMetadata) -> Self {
+        match metadata.validate() {
+            Ok(()) => Self {
+                valid: true,
+                error: None,
+            },
+            Err(error) => Self {
+                valid: false,
+                error: Some(error),
+            },
+        }
+    }
+}
+
 impl TransferMetadata {
     pub fn validate(&self) -> Result<(), MetadataValidationError> {
         validate_text(
@@ -229,6 +251,23 @@ mod tests {
         assert_eq!(
             metadata.validate().unwrap_err().code,
             MetadataValidationCode::InvalidPeerId
+        );
+    }
+
+    #[test]
+    fn returns_a_serializable_error_for_invalid_metadata() {
+        let mut metadata = transfer();
+        metadata.file.name = "nested/file.txt".into();
+
+        assert_eq!(
+            MetadataValidationResult::from_metadata(&metadata),
+            MetadataValidationResult {
+                valid: false,
+                error: Some(MetadataValidationError {
+                    code: MetadataValidationCode::InvalidFileName,
+                    message: "The selected file name is not safe to save.".into(),
+                }),
+            }
         );
     }
 }
