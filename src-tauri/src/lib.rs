@@ -1,4 +1,5 @@
 mod app;
+pub mod domain;
 
 use app::info::AppInfo;
 
