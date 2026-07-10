@@ -3,8 +3,9 @@ use std::{error::Error, fmt, path::Path};
 use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::domain::transfer::TransferMetadata;
+use crate::pairing::identity::DeviceIdentity;
 
-const SCHEMA_VERSION: i32 = 2;
+const SCHEMA_VERSION: i32 = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppSettings {
@@ -34,6 +35,7 @@ impl Default for AppSettings {
 pub enum StorageError {
     Database(rusqlite::Error),
     Serialization(serde_json::Error),
+    InvalidIdentityKey,
     InvalidTransferMetadata(String),
     UnsupportedSchema(i32),
 }
@@ -45,6 +47,7 @@ impl fmt::Display for StorageError {
             Self::Serialization(error) => {
                 write!(formatter, "Local data could not be decoded: {error}")
             }
+            Self::InvalidIdentityKey => write!(formatter, "Stored device identity is invalid."),
             Self::InvalidTransferMetadata(message) => {
                 write!(formatter, "Invalid transfer metadata: {message}")
             }
@@ -189,6 +192,32 @@ impl LocalStore {
             .collect()
     }
 
+    pub fn load_or_create_device_identity(&self) -> StorageResult<DeviceIdentity> {
+        let stored_key = self
+            .connection
+            .query_row(
+                "SELECT secret_key FROM device_identity WHERE identity_key = 'primary'",
+                [],
+                |row| row.get::<_, Vec<u8>>(0),
+            )
+            .optional()?;
+
+        if let Some(stored_key) = stored_key {
+            let secret_key: [u8; 32] = stored_key
+                .try_into()
+                .map_err(|_| StorageError::InvalidIdentityKey)?;
+            return Ok(DeviceIdentity::from_secret_key(secret_key));
+        }
+
+        let identity = DeviceIdentity::generate();
+        self.connection.execute(
+            "INSERT INTO device_identity (identity_key, secret_key) VALUES ('primary', ?1)",
+            params![identity.secret_key_bytes().to_vec()],
+        )?;
+
+        Ok(identity)
+    }
+
     fn apply_migrations(&mut self) -> StorageResult<()> {
         let current_version = self.schema_version()?;
         if current_version > SCHEMA_VERSION {
@@ -224,6 +253,16 @@ impl LocalStore {
                     ON transfer_history(recorded_at DESC);",
             )?;
             transaction.pragma_update(None, "user_version", 2)?;
+        }
+
+        if current_version < 3 {
+            transaction.execute_batch(
+                "CREATE TABLE IF NOT EXISTS device_identity (
+                    identity_key TEXT PRIMARY KEY NOT NULL,
+                    secret_key BLOB NOT NULL
+                );",
+            )?;
+            transaction.pragma_update(None, "user_version", 3)?;
         }
         transaction.commit()?;
 
@@ -311,5 +350,14 @@ mod tests {
             store.record_transfer(&record),
             Err(StorageError::InvalidTransferMetadata(_))
         ));
+    }
+
+    #[test]
+    fn retains_a_single_local_device_identity() {
+        let store = LocalStore::open_in_memory().unwrap();
+        let first = store.load_or_create_device_identity().unwrap();
+        let second = store.load_or_create_device_identity().unwrap();
+
+        assert_eq!(first.public_key(), second.public_key());
     }
 }
