@@ -46,3 +46,11 @@ export interface MetadataValidationResult {
   valid: boolean;
   error: MetadataValidationError | null;
 }
+
+export type TransferFailureCode = 'networkUnavailable' | 'peerRejected' | 'diskFull' | 'integrityFailed' | 'validationFailed';
+
+export interface TransferFailure {
+  code: TransferFailureCode;
+  message: string;
+  retryable: boolean;
+}

@@ -1,12 +1,14 @@
 <script lang="ts">
-  type QueueState = 'queued' | 'cancelled';
-  interface QueuedFile { id: string; file: File; state: QueueState; }
+  type QueueState = 'queued' | 'cancelled' | 'failed';
+  interface QueuedFile { id: string; file: File; state: QueueState; error?: string; }
 
   let queuedFiles = $state<QueuedFile[]>([]);
 
   function selectFiles(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
-    const newFiles = Array.from(input.files ?? []).map((file) => ({ id: crypto.randomUUID(), file, state: 'queued' as const }));
+    const newFiles = Array.from(input.files ?? []).map((file) => file.size === 0
+      ? { id: crypto.randomUUID(), file, state: 'failed' as const, error: 'Empty files cannot be transferred. Choose a non-empty file and retry.' }
+      : { id: crypto.randomUUID(), file, state: 'queued' as const });
     queuedFiles = [...queuedFiles, ...newFiles];
     input.value = '';
   }
@@ -14,6 +16,8 @@
   function cancel(id: string) {
     queuedFiles = queuedFiles.map((item) => item.id === id ? { ...item, state: 'cancelled' } : item);
   }
+
+  function retry(id: string) { queuedFiles = queuedFiles.map((item) => item.id === id ? { ...item, state: 'queued', error: undefined } : item); }
 
   function remove(id: string) { queuedFiles = queuedFiles.filter((item) => item.id !== id); }
 
@@ -35,6 +39,9 @@
           {#if item.state === 'queued'}
             <progress value="0" max={item.file.size} aria-label={`${item.file.name} queued`}></progress>
             <button class="secondary" onclick={() => cancel(item.id)}>Cancel</button>
+          {:else if item.state === 'failed'}
+            <p class="failure" role="alert">{item.error}</p>
+            <button class="secondary" onclick={() => retry(item.id)}>Retry</button>
           {:else}
             <button class="secondary" onclick={() => remove(item.id)}>Remove</button>
           {/if}
@@ -49,5 +56,6 @@
   h2 { margin: .25rem 0; font-size: 1.5rem; } p, span { color: #bdd2cf; } .eyebrow { color: #7df0cb; font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
   input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; } .picker, button { display: inline-block; margin-top: .75rem; padding: .7rem 1rem; border: 0; border-radius: .6rem; color: #06221d; background: #7df0cb; font: inherit; font-weight: 700; cursor: pointer; }
   .secondary { margin: 0; color: white; background: #28504d; } .picker:focus-visible, button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+  .failure { color: #ffded8; }
   ul { padding: 0; list-style: none; } li { display: grid; grid-template-columns: 1fr auto; gap: .75rem; align-items: center; padding: 1rem 0; border-top: 1px solid rgba(201,236,227,.16); } span { display: block; font-size: .9rem; } progress { width: 100%; grid-column: 1; }
 </style>
