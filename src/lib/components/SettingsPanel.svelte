@@ -1,0 +1,9 @@
+<script lang="ts">
+  import { invoke } from '@tauri-apps/api/core';
+  let deviceName = $state(''); let downloadDirectory = $state(''); let discoveryEnabled = $state(true); let status = $state('');
+  async function load() { const settings = await invoke<{ deviceName: string; downloadDirectory: string; discoveryEnabled: boolean }>('get_settings'); deviceName = settings.deviceName; downloadDirectory = settings.downloadDirectory; discoveryEnabled = settings.discoveryEnabled; }
+  async function save() { await invoke('save_settings', { settings: { deviceName, downloadDirectory, discoveryEnabled } }); status = 'Saved locally.'; }
+  load();
+</script>
+<section aria-labelledby="settings-heading"><p class="eyebrow">Settings</p><h2 id="settings-heading">Local privacy preferences</h2><form onsubmit={(event) => { event.preventDefault(); save(); }}><label for="device">Device name</label><input id="device" bind:value={deviceName}/><label for="directory">Download directory</label><input id="directory" bind:value={downloadDirectory} placeholder="Local directory"/><label class="check"><input type="checkbox" bind:checked={discoveryEnabled}/>Allow local-network discovery</label><button type="submit">Save settings</button>{#if status}<p aria-live="polite">{status}</p>{/if}</form></section>
+<style>section{max-width:36rem;margin-top:2rem;padding:1.5rem;border:1px solid rgba(201,236,227,.2);border-radius:1rem;background:rgba(8,31,33,.7)}h2{margin:.25rem 0}.eyebrow{color:#7df0cb;font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}label{display:block;margin-top:1rem;font-weight:650}input{width:100%;margin-top:.35rem;padding:.65rem;border:1px solid #6d8d87;border-radius:.5rem;color:white;background:#102b2a;font:inherit}.check input{width:auto;margin-right:.5rem}button{margin-top:1rem;padding:.7rem 1rem;border:0;border-radius:.6rem;color:#06221d;background:#7df0cb;font:inherit;font-weight:700}</style>

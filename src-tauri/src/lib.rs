@@ -122,6 +122,29 @@ fn list_transfer_history(
         .map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn get_settings(state: State<AppState>) -> Result<storage::sqlite::AppSettings, String> {
+    state
+        .store
+        .lock()
+        .map_err(|_| "Local storage is unavailable.".to_owned())?
+        .get_settings()
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn save_settings(
+    state: State<AppState>,
+    settings: storage::sqlite::AppSettings,
+) -> Result<(), String> {
+    state
+        .store
+        .lock()
+        .map_err(|_| "Local storage is unavailable.".to_owned())?
+        .save_settings(&settings)
+        .map_err(|error| error.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -142,7 +165,9 @@ pub fn run() {
             validate_manual_peer_address,
             advertise_local_peer,
             discover_local_peers,
-            list_transfer_history
+            list_transfer_history,
+            get_settings,
+            save_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

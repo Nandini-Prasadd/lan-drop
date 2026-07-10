@@ -7,7 +7,8 @@ use crate::pairing::identity::DeviceIdentity;
 
 const SCHEMA_VERSION: i32 = 3;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     pub device_name: String,
     pub download_directory: String,
