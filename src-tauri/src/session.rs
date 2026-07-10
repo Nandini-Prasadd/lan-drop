@@ -41,14 +41,14 @@ impl NoiseIdentity {
 
 pub fn initiator(identity: &NoiseIdentity) -> Result<HandshakeState, SessionError> {
     Builder::new(NOISE_PATTERN.parse::<NoiseParams>()?)
-        .local_private_key(identity.private_key())
+        .local_private_key(identity.private_key())?
         .build_initiator()
         .map_err(Into::into)
 }
 
 pub fn responder(identity: &NoiseIdentity) -> Result<HandshakeState, SessionError> {
     Builder::new(NOISE_PATTERN.parse::<NoiseParams>()?)
-        .local_private_key(identity.private_key())
+        .local_private_key(identity.private_key())?
         .build_responder()
         .map_err(Into::into)
 }
