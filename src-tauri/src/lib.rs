@@ -2,6 +2,7 @@ mod app;
 pub mod discovery;
 pub mod domain;
 pub mod pairing;
+pub mod session;
 pub mod storage;
 
 use std::{
