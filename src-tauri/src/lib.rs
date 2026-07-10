@@ -1,5 +1,6 @@
 mod app;
 pub mod domain;
+pub mod storage;
 
 use app::info::AppInfo;
 use domain::transfer::{MetadataValidationResult, TransferMetadata};
