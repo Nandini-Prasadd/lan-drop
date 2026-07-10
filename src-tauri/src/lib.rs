@@ -110,6 +110,18 @@ fn discover_local_peers() -> Result<Vec<discovery::DiscoveredPeer>, String> {
     DiscoveryService::listen_once().map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn list_transfer_history(
+    state: State<AppState>,
+) -> Result<Vec<storage::sqlite::TransferHistoryRecord>, String> {
+    state
+        .store
+        .lock()
+        .map_err(|_| "Local storage is unavailable.".to_owned())?
+        .list_transfer_history()
+        .map_err(|error| error.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -129,7 +141,8 @@ pub fn run() {
             create_pairing_invitation,
             validate_manual_peer_address,
             advertise_local_peer,
-            discover_local_peers
+            discover_local_peers,
+            list_transfer_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
