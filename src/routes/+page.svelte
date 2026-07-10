@@ -2,6 +2,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import type { AppInfo } from '$lib/models/app';
   import PairingPanel from '$lib/components/PairingPanel.svelte';
+  import SendQueue from '$lib/components/SendQueue.svelte';
 
   let appInfo = $state<AppInfo | null>(null);
   let startupError = $state<string | null>(null);
@@ -42,6 +43,7 @@
   {/if}
 
   <PairingPanel />
+  <SendQueue />
 </main>
 
 <style>
