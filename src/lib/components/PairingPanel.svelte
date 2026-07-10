@@ -12,6 +12,8 @@
   let invitation = $state<PairingInvitation | null>(null);
   let error = $state<string | null>(null);
   let isCreating = $state(false);
+  let manualAddress = $state('');
+  let manualStatus = $state<string | null>(null);
 
   async function createInvitation() {
     isCreating = true;
@@ -27,6 +29,15 @@
 
   function qrImage(svg: string) {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }
+
+  async function validateManualAddress() {
+    try {
+      const peer = await invoke<{ address: string }>('validate_manual_peer_address', { address: manualAddress });
+      manualStatus = `Ready to pair with ${peer.address}.`;
+    } catch {
+      manualStatus = 'Enter a valid address with a port, such as 192.168.1.20:47473.';
+    }
   }
 </script>
 
@@ -49,6 +60,15 @@
   {:else if error}
     <p class="error" role="alert">{error}</p>
   {/if}
+
+  <form onsubmit={(event) => { event.preventDefault(); validateManualAddress(); }}>
+    <label for="peer-address">Pair by address when discovery is unavailable</label>
+    <div class="manual-entry">
+      <input id="peer-address" bind:value={manualAddress} placeholder="192.168.1.20:47473" autocomplete="off" />
+      <button type="submit">Validate address</button>
+    </div>
+    {#if manualStatus}<p class="muted" aria-live="polite">{manualStatus}</p>{/if}
+  </form>
 </section>
 
 <style>
@@ -64,5 +84,10 @@
   strong { color: white; font-family: ui-monospace, monospace; font-size: 1.3rem; letter-spacing: .08em; }
   .muted { font-size: .9rem; }
   .error { color: #ffded8; }
+  form { margin-top: 1.5rem; }
+  label { display: block; margin-bottom: .5rem; color: white; font-weight: 650; }
+  .manual-entry { display: flex; gap: .5rem; }
+  input { min-width: 0; flex: 1; padding: .65rem .75rem; border: 1px solid #6d8d87; border-radius: .6rem; color: white; background: #102b2a; font: inherit; }
+  input:focus-visible { outline: 3px solid white; outline-offset: 2px; }
   @media (max-width: 32rem) { .invitation { grid-template-columns: 1fr; } }
 </style>

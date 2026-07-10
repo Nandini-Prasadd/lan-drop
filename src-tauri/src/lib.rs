@@ -1,4 +1,5 @@
 mod app;
+pub mod discovery;
 pub mod domain;
 pub mod pairing;
 pub mod storage;
@@ -9,6 +10,7 @@ use std::{
 };
 
 use app::info::AppInfo;
+use discovery::{DiscoveryService, ManualPeerAddress};
 use domain::transfer::{MetadataValidationResult, TransferMetadata};
 use qrcode::{render::svg, QrCode};
 use serde::Serialize;
@@ -81,6 +83,30 @@ fn create_pairing_invitation(state: State<AppState>) -> Result<PairingInvitation
     })
 }
 
+#[tauri::command]
+fn validate_manual_peer_address(address: String) -> Result<ManualPeerAddress, String> {
+    ManualPeerAddress::parse(&address).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn advertise_local_peer(state: State<AppState>) -> Result<(), String> {
+    let store = state
+        .store
+        .lock()
+        .map_err(|_| "Local storage is unavailable.".to_owned())?;
+    let identity = store
+        .load_or_create_device_identity()
+        .map_err(|error| error.to_string())?;
+    let settings = store.get_settings().map_err(|error| error.to_string())?;
+    DiscoveryService::advertise(&settings.device_name, &identity.public_key())
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn discover_local_peers() -> Result<Vec<discovery::DiscoveredPeer>, String> {
+    DiscoveryService::listen_once().map_err(|error| error.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -97,7 +123,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_info,
             validate_transfer_metadata,
-            create_pairing_invitation
+            create_pairing_invitation,
+            validate_manual_peer_address,
+            advertise_local_peer,
+            discover_local_peers
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
