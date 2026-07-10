@@ -23,10 +23,11 @@ pub fn manifest_from_reader(mut reader: impl Read, file_name: String) -> io::Res
         digest.update(&buffer[..read]);
         size_bytes += read as u64;
     }
+    let hash = digest.finalize();
     Ok(FileManifest {
         file_name,
         size_bytes,
-        sha256: format!("{:x}", digest.finalize()),
+        sha256: hash.iter().map(|byte| format!("{byte:02x}")).collect(),
     })
 }
 
