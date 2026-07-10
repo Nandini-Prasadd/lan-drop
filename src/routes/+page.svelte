@@ -4,6 +4,7 @@
   import PairingPanel from '$lib/components/PairingPanel.svelte';
   import SendQueue from '$lib/components/SendQueue.svelte';
   import TransferHistory from '$lib/components/TransferHistory.svelte';
+  import SettingsPanel from '$lib/components/SettingsPanel.svelte';
 
   let appInfo = $state<AppInfo | null>(null);
   let startupError = $state<string | null>(null);
@@ -46,6 +47,7 @@
   <PairingPanel />
   <SendQueue />
   <TransferHistory />
+  <SettingsPanel />
 </main>
 
 <style>
