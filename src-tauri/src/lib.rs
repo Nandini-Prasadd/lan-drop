@@ -4,6 +4,7 @@ pub mod domain;
 pub mod pairing;
 pub mod session;
 pub mod storage;
+pub mod transfer;
 
 use std::{
     sync::Mutex,
