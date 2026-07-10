@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
   import type { AppInfo } from '$lib/models/app';
+  import PairingPanel from '$lib/components/PairingPanel.svelte';
 
   let appInfo = $state<AppInfo | null>(null);
   let startupError = $state<string | null>(null);
@@ -39,6 +40,8 @@
   {:else}
     <p aria-live="polite">Loading local application details…</p>
   {/if}
+
+  <PairingPanel />
 </main>
 
 <style>
