@@ -33,7 +33,7 @@
         <li>
           <div><strong>{item.file.name}</strong><span>{size(item.file.size)} · {item.state}</span></div>
           {#if item.state === 'queued'}
-            <progress value="0" max={item.file.size} aria-label={`${item.file.name} queued`} />
+            <progress value="0" max={item.file.size} aria-label={`${item.file.name} queued`}></progress>
             <button class="secondary" onclick={() => cancel(item.id)}>Cancel</button>
           {:else}
             <button class="secondary" onclick={() => remove(item.id)}>Remove</button>
