@@ -2,6 +2,7 @@ mod app;
 pub mod discovery;
 pub mod domain;
 pub mod pairing;
+pub mod receiver;
 pub mod session;
 pub mod storage;
 pub mod transfer;
